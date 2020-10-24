@@ -11,13 +11,19 @@ import * as utils from './utils.js';
 import * as main from './main.js';
 
 let ctx,canvasWidth,canvasHeight,gradient,analyserNode,audioData;
-
+const soundAvgMax = 185,soundMax = 80;
+let r = 255, g = 0, b = 0;
+let firstPhase, secondPhase, thirdPhase, forthPhase, fifthPhase, sixthPhase;
+let invTest = 0;
+let _percent;
+let shownBarAvg = 0;
+let barsToShow = 45;
 
 function setupCanvas(canvasElement,analyserNodeRef){
 	// create drawing context
 	ctx = canvasElement.getContext("2d");
 	canvasWidth = canvasElement.width;
-	canvasHeight = canvasElement.height;
+    canvasHeight = canvasElement.height;
 	// create a gradient that runs top to bottom
 	gradient = utils.getLinearGradient(ctx,0,0,0,canvasHeight,[{percent:0,color:"red"},{percent:.25,color:"black"},{percent:.5,color:"red"},{percent:.75,color:"black"},{percent:1,color:"red"}]);
 	// keep a reference to the analyser node
@@ -28,7 +34,8 @@ function setupCanvas(canvasElement,analyserNodeRef){
 }
 
 function draw(params={}){
-  // 1 - populate the audioData array with the frequency data from the analyserNode
+    let average = soundBarsAverage();
+    // 1 - populate the audioData array with the frequency data from the analyserNode
 	// notice these arrays are passed "by reference" 
 	analyserNode.getByteFrequencyData(audioData);
 	// OR
@@ -51,40 +58,62 @@ function draw(params={}){
         ctx.fillRect(0,0,canvasWidth,canvasHeight);
         ctx.restore();
     }*/
-	// 4 - draw bars
+    // 4 - draw bars
+    let amountTotal = 0;
 	if(params.showBars){
         let amount = 0;
         if(main.getPlaying()){
             for(let i = 0; i<audioData.length; i++){
                 if(audioData[i]>50){
+                    amountTotal+=audioData[i];
                     amount++;
                 }
             }
         }
-      //  console.log("amount: " +amount);
+        //console.log("avg from amount: " +amountTotal/amount);
         //console.log(audioData[0]);
-        
-        let barSpacing = 4;
+        shownBarAvg = amountTotal/amount;
+        _percent = getPercentage();
+        console.log(amount);
+        let barSpacing = -0.1;
         let margin = 5;
         let screenWidthForBar = canvasWidth - (audioData.length * barSpacing) - margin * 2;
         //let screenWidthForBar = canvasWidth - (audioData.length * barSpacing) - margin * 2;
         //let barWidth = screenWidthForBar/ audioData.length;
-        let barWidth = main.getPlaying() ? screenWidthForBar/ amount : screenWidthForBar/ audioData.length;
-        let barHeight = 200;
+        let barWidth = main.getPlaying() ? screenWidthForBar/ barsToShow : screenWidthForBar/ audioData.length;
+        let maxHeight = canvasHeight/4;
+        let minHeight = 5;
         let topSpacing = 100;
-
-        ctx.save();
-        ctx.fillStyle = 'rgba(255,255,255,0.50)';
-        ctx.strokeStyle = 'rgba(0,0,0,0.50';
+        //place bars only on half
+        barWidth /= 2;
+        //ctx.save();
+        //ctx.fillStyle = 'rgba(255,255,255,0.50)';
+        //ctx.strokeStyle = 'rgba(0,0,0,0.50)';
 
         for(let i = 0; i < audioData.length; i++){
-            ctx.fillRect(margin + i * (barWidth + barSpacing), topSpacing + 256-audioData[i],barWidth,barHeight);
-            ctx.strokeRect(margin + i * (barWidth + barSpacing), topSpacing + 256-audioData[i],barWidth,barHeight);
+            ctx.save();
+            let barHeight = maxHeight*(audioData[i]/soundAvgMax)+minHeight;
+            ctx.fillStyle = getRainbowColors(255*3/audioData.length*2);
+            ctx.fillRect(canvasWidth/2 + i * (barWidth + barSpacing), canvasHeight/2 - (barHeight - minHeight),barWidth,barHeight);
+            if(i!=0)
+            ctx.fillRect(canvasWidth/2 - i * (barWidth + barSpacing), canvasHeight/2 - (barHeight - minHeight),barWidth,barHeight);
+            //ctx.fillRect(margin + i * (barWidth + barSpacing), topSpacing + 256-audioData[i],barWidth,barHeight);
+            //ctx.strokeRect(margin + i * (barWidth + barSpacing), topSpacing + 256-audioData[i],barWidth,barHeight);
+            ctx.restore();
+            ctx.save();
+            ctx.globalAlpha =.25;
+            ctx.fillStyle = getRainbowColors(255*3/audioData.length*2);
+            if(i!=0)
+            ctx.fillRect(canvasWidth/2 + i * (barWidth + barSpacing), canvasHeight/2,barWidth,barHeight);
+            ctx.fillRect(canvasWidth/2 - i * (barWidth + barSpacing), canvasHeight/2,barWidth,barHeight);
+            ctx.restore();
         }
-        ctx.restore();
-     //   console.log("Avg: " + soundBarsAverage()/audioData.length);
+        resetRainbowColor(); // comment out for constant rainbow
+        //ctx.restore();
+        //console.log("Avg: " + soundBarsAverage());
     }
-	// 5 - draw circles
+    // 5 - draw circles
+    /*
 		if(params.showCircles){
             let maxRadius = canvasHeight/6;
             ctx.save();
@@ -135,6 +164,7 @@ function draw(params={}){
             }
             ctx.restore();
         }
+        */
         // 6 - bitmap manipulation
 	// TODO: right now. we are looping though every pixel of the canvas (320,000 of them!), 
 	// regardless of whether or not we are applying a pixel effect
@@ -162,12 +192,20 @@ function draw(params={}){
 			// make the red channel 100% red
         } // end if
     } // end for
+    //console.log("percentage: " + _percent)
+    
     if(params.showInvert){
         for(let i = 0; i < length;i+=4){
             let red = data[i], green = data[i+1], blue = data[i+2];
-        data[i] = 255 - red;
-        data[i+1] = 255 - green;
-        data[i+2] = 255 - blue;
+            
+            //if(i==0)
+            //console.log("r: " + data[i],"g: " + data[i+1],"b: " + data[i+2])
+            
+            data[i] = getInvByPercentage(red);
+            data[i+1] = getInvByPercentage(green);
+            data[i+2] = getInvByPercentage(blue);
+            
+        //console.log("r: " + data[i],"g: " + data[i+1],"b: " + data[i+2])
         }
     }
     if(params.showEmboss){
@@ -182,12 +220,77 @@ function draw(params={}){
     
 
 }
+function getInvByPercentage(num){
+    return (((255-num)-num)*_percent) + num;
+}
+
+function getPercentage(){
+    return soundBarsAverage()==0 ? 0 : soundBarsAverage()/soundMax;
+}
+function getAvgPercentage(){
+    return soundBarsAverage()==0 ? 0 : shownBarAvg/soundAvgMax;
+}
+function resetRainbowColor(){
+    firstPhase = secondPhase = thirdPhase = forthPhase = fifthPhase = sixthPhase = false;
+    r = 255;
+    g = 0;
+    b = 0;
+}
+
+function getRainbowColors(rate){
+    if(!firstPhase){
+        g +=rate;
+        if(g>=255){
+            firstPhase = true;
+            g = 255;
+        }
+    }
+    else if(!secondPhase){
+        r -= rate;
+        if(r<=0){
+            secondPhase = true;
+            r = 0;
+        }
+    }
+    else if(!thirdPhase){
+        b += rate;
+        if(b>=255){
+            thirdPhase = true;
+            b = 255;
+        }
+    }
+    else if(!forthPhase){
+        g -= rate;
+        if(g<=0){
+            forthPhase = true;
+            g = 0;
+        }
+    }
+    else if(!fifthPhase){
+        r += rate;
+        if(r>=255){
+            fifthPhase = true;
+            r = 255;
+        }
+    }
+    else if(!sixthPhase){
+        g -= rate;
+        if(g<=0){
+            sixthPhase = true;
+            g = 0;
+        }
+    }
+    else{
+        firstPhase = secondPhase = thirdPhase = forthPhase = fifthPhase = sixthPhase = false;
+    }
+    return 'rgba(' + r +', ' + g + ', ' + b + ',0.50)';
+}
 
 function soundBarsAverage(){
     let total = 0;
     for(let i = 0; i < audioData.length; i++){
         total += audioData[i];
     }
-    return total;
+    return total/audioData.length;
 }
 export {setupCanvas,draw};

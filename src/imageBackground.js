@@ -14,10 +14,12 @@ export class imageBackground{
     constructor(canvas){
         this.canvas = canvas;
         this.backgroundColor = "white";
+        this.size = this.canvas.width/8;
+
     }
     drawImage(image){
         let ctx = this.canvas.getContext('2d');
-        let scale = this.canvas.height / image.height;
+        let scale = this.size / image.height;
         ctx.save();
         ctx.fillStyle = this.backgroundColor;
         ctx.fillRect(0,0,this.canvas.width,this.canvas.height);

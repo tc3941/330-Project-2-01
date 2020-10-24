@@ -17,7 +17,7 @@ const drawParams = {
     showBars : true,
     showCircles : true,
     showNoise : false,
-    showInvert : false,
+    showInvert : true,
     showEmboss : false
 }
 // 1 - here we are faking an enumeration
@@ -30,7 +30,6 @@ let imageObjects= [];
 let currentImageIndex = 0;
 let imageEffect;
 let isPlaying;
-
 	
 preloadImages(imageSources,init);
 
@@ -54,10 +53,14 @@ function init(){
 	console.log("init called");
 	console.log(`Testing utils.getRandomColor() import: ${utils.getRandomColor()}`);
 	let canvasElement = document.querySelector("canvas"); // hookup <canvas> element
+    canvasElement.width = window.innerWidth;
+    canvasElement.height = window.innerHeight;
+    canvasElement.parentNode.height = canvasElement.height;
     setupUI(canvasElement);
     
     canvas.setupCanvas(canvasElement,audio.analyserNode);
     imageEffect = new imageBackground(canvasElement);
+    loadPreset(0);
     loop();
 }
 
@@ -65,11 +68,17 @@ function loadPreset(num){
     currentImageIndex = num;
     //console.log(num);
     switch (num){
-        case 0: imageEffect.setBackgroundColor("white"); break;
-        case 1: imageEffect.setBackgroundColor('rgba(12,12,12,0.50)'); break;
-        case 2: imageEffect.setBackgroundColor('rgba(5,87,163,0.50)'); break;
+        case 0: setColors("white"); break;
+        case 1: setColors('rgba(12,12,12,0.50)'); break;
+        case 2: setColors('rgba(5,87,163,0.50)'); break;
     }
     console.log(imageEffect.backgroundColor);
+}
+
+function setColors(color){
+    //document.querySelector("div").style.backgroundColor = color;
+    //document.body.style.backgroundColor = color;
+    imageEffect.setBackgroundColor(color);
 }
 
 function loop(){

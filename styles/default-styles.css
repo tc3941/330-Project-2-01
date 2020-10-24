@@ -1,18 +1,28 @@
 body {
-	background: #eeeeee;
-	font-family: tahoma, verdana, sans serif;
+  margin: 0;
+	background: transparent;
+  font-family: tahoma, verdana, sans serif;
+  position:fixed;
+  top:0;
+  bottom:0;
+  left:0;
+  right:0;
+}
+main{
+  margin:0;
+  max-height: 90%;
 }
 
 canvas {
-	margin-left: 1rem;
-	margin-top: 1rem;
-	margin-bottom: 1rem;
-	box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+	margin-bottom: 0px;
 	background: #fafafa;
 }
 
 #controls{
   margin-left: 1rem;
+  position: absolute;
+  left: 0;
+  top: 0;
 }
 
 #volumeLabel{
@@ -20,7 +30,11 @@ canvas {
 }
 
 section{
-  margin-bottom: 1rem;
+  margin-bottom: 0px;
+}
+span{
+  display: none;
+  background-color: transparent;
 }
 
 #playButton{
