@@ -4,11 +4,14 @@
 	<meta charset="utf-8" />
 	<title>Audio Visualizer</title>
 	<link href="styles/default-styles.css" type="text/css" rel="stylesheet" />
+	<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@700&display=swap" rel="stylesheet">
 	<script src="./src/loader.js" type="module"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js" integrity="sha256-HJ7j+71YYw6Kcs8THwQV9lXmPOcR0eXlg7n8KRTZsyA=" crossorigin="anonymous"></script>
 </head>
 <body>
-<main>
-	<canvas width="1800" height="800"></canvas>
+	<main>
+		<canvas width="1800" height="800"></canvas>
+		<h1 id="songTitle">DatGui Test</h1>
 	<div id="controls">
 		<section>
 			<button id="playButton" data-playing="no"></button>
@@ -16,19 +19,22 @@
 		
 			<label>Track: 
 				<select id="trackSelect">
-					<option value="media/Better Than Ever.mp3" selected>Better Than Ever</option>
-					<option value="media/Paradigm.mp3">Paradigm</option>
-					<option value="media/SickoMode.mp3">Sicko Mode</option>
+					<option class="audio" value="media/Better Than Ever.mp3" selected>Better Than Ever</option>
+					<option class="audio" value="media/Paradigm.mp3">Paradigm</option>
+					<option class="audio" value="media/SickoMode.mp3">Sicko Mode</option>
 				</select>
+				<button id="helpBt">Instructions</button>
 			</label>
 		</section>
 		
-		<section>
+		<section id="volumeControls">
 			Volume: <input type="range" id="volumeSlider" min="0" max="2" value="1" step="0.01">
 			<span id="volumeLabel">???</span>
 		</section>
 	</div>
-	<section>
+	<section id="checkboxs">
+		<input type="file" id="musicFile" accept="audio/*">
+		<input type="file" id="songCover" accept="image/*">
 		<span style="display: none;"><input type="checkbox" id="gradientCB" checked><label for="gradientCB">Show Gradient</label></span>
 		<span><input type="checkbox" id="barsCB" checked><label for="barsCB">Show Bars</label></span>
 		<span><input type="checkbox" id="circlesCB" checked><label for="circlesCB">Show Circles</label></span>

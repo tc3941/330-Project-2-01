@@ -11,13 +11,18 @@ import * as utils from './utils.js';
 import * as main from './main.js';
 
 let ctx,canvasWidth,canvasHeight,gradient,analyserNode,audioData;
-const soundAvgMax = 185,soundMax = 80;
+const soundAvgMax = 200,soundMax = 80;
 let r = 255, g = 0, b = 0;
 let firstPhase, secondPhase, thirdPhase, forthPhase, fifthPhase, sixthPhase;
 let invTest = 0;
 let _percent;
 let shownBarAvg = 0;
 let barsToShow = 45;
+let currentTime;
+let _maxTime;
+let preset;
+let gradientSteps;
+const rem = 16;//rem in px
 
 function setupCanvas(canvasElement,analyserNodeRef){
 	// create drawing context
@@ -32,35 +37,31 @@ function setupCanvas(canvasElement,analyserNodeRef){
     audioData = new Uint8Array(analyserNode.fftSize/2);
     
 }
+function setTime(time){
+currentTime = time;
+}
+function setMaxTime(maxTime){
+_maxTime = maxTime;
+}
+function setPreset(value){
+    preset = value;
+    gradientSteps = preset.createGradientColor((barsToShow+2)/preset.numOfPhases);
+    //console.log(gradientSteps);
+}
+function correctTime(){
+    let zero = Math.floor(currentTime%60)>=10 ? "": "0";
+    return Math.floor(currentTime/60) + ":" + zero + Math.floor(currentTime%60);
+}
 
 function draw(params={}){
     let average = soundBarsAverage();
     // 1 - populate the audioData array with the frequency data from the analyserNode
 	// notice these arrays are passed "by reference" 
-	analyserNode.getByteFrequencyData(audioData);
+    analyserNode.getByteFrequencyData(audioData);
 	// OR
 	//analyserNode.getByteTimeDomainData(audioData); // waveform data
-	
-    // 2 - draw background
-    /*
-    ctx.save();
-    ctx.fillStyle= "black";
-    ctx.globalAlpha = .1;	
-    ctx.fillRect(0,0,canvasWidth,canvasHeight);
-    ctx.restore();*/
-    
-    // 3 - draw gradient
-    /*
-	if(params.showGradient){
-        ctx.save();
-        ctx.fillStyle = gradient;
-        ctx.globalAlpha = .3;
-        ctx.fillRect(0,0,canvasWidth,canvasHeight);
-        ctx.restore();
-    }*/
     // 4 - draw bars
     let amountTotal = 0;
-	if(params.showBars){
         let amount = 0;
         if(main.getPlaying()){
             for(let i = 0; i<audioData.length; i++){
@@ -74,44 +75,71 @@ function draw(params={}){
         //console.log(audioData[0]);
         shownBarAvg = amountTotal/amount;
         _percent = getPercentage();
-        console.log(amount);
+        //console.log("amount: " + amount);
         let barSpacing = -0.1;
         let margin = 5;
         let screenWidthForBar = canvasWidth - (audioData.length * barSpacing) - margin * 2;
         //let screenWidthForBar = canvasWidth - (audioData.length * barSpacing) - margin * 2;
         //let barWidth = screenWidthForBar/ audioData.length;
-        let barWidth = main.getPlaying() ? screenWidthForBar/ barsToShow : screenWidthForBar/ audioData.length;
+        // let barWidth = main.getPlaying() ? screenWidthForBar/ barsToShow : screenWidthForBar/ audioData.length;
+        let barWidth = screenWidthForBar/ barsToShow;
+        //console.log("barsToShow: " + barsToShow);
+        //console.log("Calculated barToShow: " + screenWidthForBar/barWidth);
         let maxHeight = canvasHeight/4;
         let minHeight = 5;
         let topSpacing = 100;
         //place bars only on half
         barWidth /= 2;
-        //ctx.save();
-        //ctx.fillStyle = 'rgba(255,255,255,0.50)';
-        //ctx.strokeStyle = 'rgba(0,0,0,0.50)';
 
+        let spaceForProgressBar = minHeight*6;
+        
         for(let i = 0; i < audioData.length; i++){
             ctx.save();
+            ctx.globalAlpha =.75;
             let barHeight = maxHeight*(audioData[i]/soundAvgMax)+minHeight;
+                    if(preset.ifRainbowBars()){
             ctx.fillStyle = getRainbowColors(255*3/audioData.length*2);
-            ctx.fillRect(canvasWidth/2 + i * (barWidth + barSpacing), canvasHeight/2 - (barHeight - minHeight),barWidth,barHeight);
+                    }else{
+                        ctx.fillStyle = gradientSteps[i];
+                    }
+            ctx.fillRect(canvasWidth/2 + i * (barWidth + barSpacing), canvasHeight/2 - (barHeight+spaceForProgressBar/2+minHeight),barWidth,barHeight+spaceForProgressBar/2+minHeight);
             if(i!=0)
-            ctx.fillRect(canvasWidth/2 - i * (barWidth + barSpacing), canvasHeight/2 - (barHeight - minHeight),barWidth,barHeight);
-            //ctx.fillRect(margin + i * (barWidth + barSpacing), topSpacing + 256-audioData[i],barWidth,barHeight);
-            //ctx.strokeRect(margin + i * (barWidth + barSpacing), topSpacing + 256-audioData[i],barWidth,barHeight);
+            ctx.fillRect(canvasWidth/2 - i * (barWidth + barSpacing), canvasHeight/2 - (barHeight+spaceForProgressBar/2+minHeight),barWidth,barHeight+spaceForProgressBar/2+minHeight);
             ctx.restore();
             ctx.save();
-            ctx.globalAlpha =.25;
-            ctx.fillStyle = getRainbowColors(255*3/audioData.length*2);
-            if(i!=0)
-            ctx.fillRect(canvasWidth/2 + i * (barWidth + barSpacing), canvasHeight/2,barWidth,barHeight);
-            ctx.fillRect(canvasWidth/2 - i * (barWidth + barSpacing), canvasHeight/2,barWidth,barHeight);
+            ctx.globalAlpha =.45;
+                        if(preset.ifRainbowBars()){
+                            ctx.fillStyle = getRainbowColors(255*3/audioData.length*2);
+                        }else{
+                            ctx.fillStyle = gradientSteps[i];
+                        }            
+                        if(i!=0)
+            ctx.fillRect(canvasWidth/2 + i * (barWidth + barSpacing), canvasHeight/2 ,barWidth,barHeight + spaceForProgressBar/2);
+            ctx.fillRect(canvasWidth/2 - i * (barWidth + barSpacing), canvasHeight/2 ,barWidth,barHeight+ spaceForProgressBar/2);
+        // }
             ctx.restore();
         }
+        
         resetRainbowColor(); // comment out for constant rainbow
-        //ctx.restore();
-        //console.log("Avg: " + soundBarsAverage());
-    }
+    
+
+    //song progress bar
+    ctx.save();
+    let percentageOfSongComplete = _maxTime==0 ? 0 : currentTime/_maxTime;
+    ctx.fillStyle = preset.BackgroundColor;
+    console.log();
+    ctx.fillRect(canvasWidth,canvasHeight/2 - (spaceForProgressBar+minHeight*2)/2,(-canvasWidth)*(1-percentageOfSongComplete),spaceForProgressBar+minHeight)
+    ctx.restore();
+    ctx.save();
+    ctx.fillStyle = preset.getFontColor();
+    ctx.font = `${spaceForProgressBar-minHeight}px Josefin Sans`;
+    ctx.fillText(correctTime(), canvasWidth/2-25,canvasHeight/2+minHeight,100);
+    ctx.font = `bold ${2*rem}px Josefin Sans`;
+    let fontWidth = ctx.measureText(preset.songTitle).width;
+    let titleMargin = rem;
+    ctx.fillText(preset.songTitle,canvasWidth-fontWidth-titleMargin,canvasHeight-titleMargin);
+    ctx.restore();
+
     // 5 - draw circles
     /*
 		if(params.showCircles){
@@ -192,21 +220,15 @@ function draw(params={}){
 			// make the red channel 100% red
         } // end if
     } // end for
-    //console.log("percentage: " + _percent)
     
     if(params.showInvert){
         for(let i = 0; i < length;i+=4){
             let red = data[i], green = data[i+1], blue = data[i+2];
-            
-            //if(i==0)
-            //console.log("r: " + data[i],"g: " + data[i+1],"b: " + data[i+2])
-            
+                    
             data[i] = getInvByPercentage(red);
             data[i+1] = getInvByPercentage(green);
             data[i+2] = getInvByPercentage(blue);
-            
-        //console.log("r: " + data[i],"g: " + data[i+1],"b: " + data[i+2])
-        }
+            }
     }
     if(params.showEmboss){
         for(let i = 0; i < length;i++){
@@ -293,4 +315,4 @@ function soundBarsAverage(){
     }
     return total/audioData.length;
 }
-export {setupCanvas,draw};
+export {setupCanvas,draw,setTime,setMaxTime,setPreset};

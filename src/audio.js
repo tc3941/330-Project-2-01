@@ -3,13 +3,21 @@ let audioCtx;
 
 // **These are "private" properties - these will NOT be visible outside of this module (i.e. file)**
 // 2 - WebAudio nodes that are part of our WebAudio audio routing graph
-let element, sourceNode, analyserNode, gainNode;
+export let element;
+let sourceNode, analyserNode, gainNode;
 
 // 3 - here we are faking an enumeration
 const DEFAULTS = Object.freeze({
     gain        :       .5,
     numSamples   :       256
 });
+/*
+document.querySelector("#upload").onchange = (e) => {
+    const files = e.target.files;
+    document.querySelector("audio").src = URL.createObjectURL(files[0]);
+};
+*/
+
 
 // 4 - create a new array of 8-bit integers (0-255)
 // this is a typed array to hold the audio frequency data
@@ -23,12 +31,12 @@ function setUpWebaudio(filepath){
 
 // 2 - this creates an <audio> element
     element = new Audio();
-
 // 3 - have it point at a sound file
     loadSoundFile(filepath);
 
 // 4 - create an a source node that points at the <audio> element
     sourceNode = audioCtx.createMediaElementSource(element);
+    
 
 // 5 - create an analyser node
 // note the UK spelling of "Analyser"

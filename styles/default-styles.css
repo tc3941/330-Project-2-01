@@ -8,6 +8,9 @@ body {
   left:0;
   right:0;
 }
+*{
+  font-family: 'Josefin Sans', sans-serif;
+}
 main{
   margin:0;
   max-height: 90%;
@@ -32,9 +35,18 @@ canvas {
 section{
   margin-bottom: 0px;
 }
-span{
+#checkboxs,#volumeControls,#playButton,#fsButton{
   display: none;
   background-color: transparent;
+}
+h1{
+  display: none;
+  background-color: transparent;
+  margin-bottom: 1rem;
+  margin-right: 1rem;
+  position: absolute;
+  right:0px;
+  bottom: 0px;
 }
 
 #playButton{
